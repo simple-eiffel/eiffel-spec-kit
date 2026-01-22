@@ -189,6 +189,62 @@ end
 
 Ensure `<project-path>/<project>.ecf` exists with proper targets.
 
+### Step 5b: ECF Dependency Audit (simple_* First - MANDATORY)
+
+**RULE:** Validate ECF against simple_* first policy from intent-v2.md.
+
+**Scan ECF for violations:**
+```bash
+grep -E '\$ISE_LIBRARY|\$GOBO|gobo' <project-path>/<project>.ecf
+```
+
+**Allowed ISE libraries (no simple_* equivalent):**
+- `$ISE_LIBRARY/library/base/base.ecf` - fundamental types
+- `$ISE_LIBRARY/library/time/time.ecf` - DATE, TIME, DATE_TIME
+- `$ISE_LIBRARY/library/testing/testing.ecf` - EQA_TEST_SET
+
+**BLOCKED (simple_* exists):**
+| ISE/Gobo Path | Use Instead |
+|---------------|-------------|
+| `$ISE_LIBRARY/library/process` | simple_process |
+| `$ISE_LIBRARY/contrib/.../json` | simple_json |
+| `$ISE_LIBRARY/library/net` | simple_http |
+| `$ISE_LIBRARY/library/xml` | simple_xml |
+| `$GOBO/library/regexp` | simple_regex |
+| `$GOBO/library/string` | simple_encoding |
+
+**If violation found:**
+1. Check if simple_* equivalent exists:
+   ```
+   Task(subagent_type=Explore) → "Does a simple_* library exist for [capability]?"
+   ```
+2. If exists → Replace with simple_* in ECF
+3. If not exists → Document gap and get user approval to use ISE/Gobo temporarily
+
+**ECF Template (correct pattern):**
+```xml
+<capability>
+    <concurrency support="scoop"/>
+    <void_safety support="all"/>
+</capability>
+<!-- ISE allowed -->
+<library name="base" location="$ISE_LIBRARY/library/base/base.ecf"/>
+<library name="testing" location="$ISE_LIBRARY/library/testing/testing.ecf"/>
+<!-- simple_* preferred -->
+<library name="simple_json" location="$SIMPLE_EIFFEL/simple_json/simple_json.ecf"/>
+<library name="simple_http" location="$SIMPLE_EIFFEL/simple_http/simple_http.ecf"/>
+<library name="simple_mml" location="$SIMPLE_EIFFEL/simple_mml/simple_mml.ecf"/>
+```
+
+**Evidence:** Add to phase1-compile.txt:
+```
+ECF Dependency Audit:
+- ISE allowed: base, time, testing
+- simple_* used: [list]
+- Violations: [none or list with justification]
+- Gaps identified: [none or list for future simple_*]
+```
+
 ### Step 6: Compile (MANDATORY GATE)
 
 **CRITICAL: You MUST cd to the project directory before compiling.** The EIFGENs folder is created in the current working directory, not where the ECF file is located. Compiling from the wrong directory pollutes other folders with build artifacts.
@@ -297,4 +353,6 @@ The sub-agent searches, summarizes, and returns ONLY what you need. Your context
 - Skeletal tests document what will be tested (can't claim "I forgot")
 - **MML is mandatory for collections** - decided in Phase 0, enforced here
 - **SCOOP consumer test catches integration issues early** - no "works for me" drift
+- **simple_* first policy enforced** - ECF audit blocks ISE/Gobo where simple_* exists
+- **Gaps documented** - ISE/Gobo usage requires justification and creates future simple_* recommendations
 - **Skill Version Lock:** If you discover skill improvements during workflow, queue them in `<project-path>/.eiffel-workflow/skill-improvements.md` - do NOT modify skills mid-workflow

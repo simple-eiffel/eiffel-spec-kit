@@ -71,8 +71,36 @@ Ask the user to describe what they want to build. Create `<project-path>/.eiffel
 ## Out of Scope
 [What this explicitly does NOT do]
 
-## Dependencies
-[Other simple_* libraries or systems required]
+## Dependencies (REQUIRED - simple_* First Policy)
+
+**RULE:** Always prefer simple_* libraries over ISE EiffelStudio stdlib and Gobo.
+
+| Need | simple_* Library | AVOID |
+|------|------------------|-------|
+| JSON | simple_json | $ISE_LIBRARY/contrib/library/web/framework/ewf/text/json |
+| HTTP | simple_http | Gobo HTTP, EiffelNet |
+| XML | simple_xml | $ISE_LIBRARY/library/xml |
+| Regex | simple_regex | Gobo regex |
+| Process | simple_process | $ISE_LIBRARY/library/process |
+| Encoding | simple_encoding | Gobo encoding |
+| CSV | simple_csv | Custom parsing |
+| Config | simple_config | Custom INI parsing |
+| Math | simple_math | Custom math |
+| MML | simple_mml | ETH base2 |
+
+**Only ISE allowed (no simple_* equivalent):**
+- `base` - fundamental types
+- `time` - DATE, TIME, DATE_TIME
+- `testing` - EQA_TEST_SET
+
+**List your dependencies:**
+
+| Need | Library | Justification |
+|------|---------|---------------|
+| [capability needed] | simple_* | [why this one] |
+| [capability needed] | ISE only if no simple_* | [gap identified] |
+
+**If ISE/Gobo required:** Document the gap for potential simple_* development.
 
 ## MML Decision (REQUIRED)
 
@@ -177,6 +205,36 @@ When user returns with AI review:
 2. Ask user to answer each question
 3. Create `<project-path>/.eiffel-workflow/intent-v2.md` incorporating answers
 
+### Step 5b: Dependency Audit (simple_* First)
+
+**Before finalizing intent-v2.md, audit all dependencies:**
+
+1. **Check each dependency against simple_* ecosystem:**
+   ```
+   Task(subagent_type=Explore) → "List all simple_* libraries and their purposes"
+   ```
+
+2. **For each ISE/Gobo dependency identified:**
+   - Research if a simple_* equivalent exists
+   - If no equivalent: document the gap
+   - Add to intent-v2.md under "Gaps for Future simple_* Libraries"
+
+3. **If gap identified, create recommendation:**
+   ```markdown
+   ## Gaps Identified (Potential simple_* Libraries)
+
+   | Gap | Current Workaround | Proposed simple_* |
+   |-----|-------------------|-------------------|
+   | [capability] | ISE/Gobo [library] | simple_[name] |
+
+   **Recommendation:** After shipping this library, consider creating simple_[name] to fill this gap.
+   ```
+
+**This ensures:**
+- No ISE/Gobo usage without explicit justification
+- Gaps are documented for future ecosystem growth
+- simple_* ecosystem expands based on real needs
+
 ### Step 6: Final Approval
 
 Ask: **"Intent document refined. Approve to proceed to Phase 1 (Contracts)?"**
@@ -238,4 +296,6 @@ The sub-agent searches, summarizes, and returns ONLY what you need. Your context
 - Human manually submits to AI (forced engagement)
 - Evidence file documents what AI was used
 - **MML decision is front-loaded** - no "we'll add it later" drift
+- **simple_* first policy declared** - dependencies audited before Phase 1
+- **Gaps documented upfront** - ISE/Gobo usage creates future simple_* recommendations
 - **Skill Version Lock:** If you discover skill improvements during workflow, queue them in `<project-path>/.eiffel-workflow/skill-improvements.md` - do NOT modify skills mid-workflow
