@@ -69,11 +69,46 @@ Check for signs of drift:
 - Contracts modified since Phase 2?
 - Tasks.md out of sync?
 - Evidence files missing?
+- Skills modified during workflow?
 
 ```
 DRIFT WARNINGS:
 - [!] Contracts changed since review (re-run /eiffel.review)
 - [!] phase4-compile.txt missing (compile not verified)
+- [!] Skill files modified since workflow start (queue changes for after ship)
+```
+
+### Step 4b: Skill Version Lock Check
+
+**Why:** Modifying skills mid-workflow causes drift. Discovered improvements should be queued for after ship.
+
+Check skill modification times vs workflow start:
+```bash
+# Get workflow start time (phase0 evidence)
+WORKFLOW_START=$(stat -c %Y <project-path>/.eiffel-workflow/evidence/phase0-intent.txt 2>/dev/null)
+
+# Check if any eiffel-* skills were modified after workflow started
+find ~/.claude/skills/eiffel-* -name "SKILL.md" -newer <project-path>/.eiffel-workflow/evidence/phase0-intent.txt
+```
+
+**If skills were modified during workflow:**
+```
+SKILL DRIFT WARNING:
+- Skills modified during workflow execution
+- Changes made: [list files]
+- Recommendation: Complete current workflow, then formalize skill improvements
+```
+
+**Best Practice:** Create `<project-path>/.eiffel-workflow/skill-improvements.md` to queue discovered improvements:
+```markdown
+# Skill Improvements Discovered During This Workflow
+
+## To Apply After Ship
+1. [Improvement description]
+2. [Improvement description]
+
+## Applied During Workflow (drift)
+1. [What was changed and why]
 ```
 
 ### Step 5: Suggest Next Action

@@ -203,6 +203,42 @@ cd <project-path> && /d/prod/ec.sh -batch -config <project>.ecf -target <project
 - Obsolete `as_string_8`: Use explicit `{STRING_32} "literal"` manifest type or `.to_string_8`
 - Obsolete feature calls: Replace with the suggested alternative in the warning message
 
+### Step 6b: SCOOP Consumer Test (MANDATORY GATE)
+
+**Why:** Libraries may compile standalone but break when consumed by SCOOP-enabled projects. This catches VUAR(2) type conformance errors early.
+
+Create a minimal SCOOP consumer test file `<project-path>/test/test_scoop_consumer.e`:
+
+```eiffel
+note
+    description: "SCOOP consumer compatibility test"
+
+class TEST_SCOOP_CONSUMER
+
+feature -- Test
+
+    test_scoop_compatibility
+            -- Verify library types work in SCOOP context.
+        local
+            -- Declare locals using library's main types
+            l_instance: <MAIN_CLASS>
+        do
+            create l_instance.make
+            -- Minimal usage to trigger type checking
+        end
+
+end
+```
+
+**Compile with explicit SCOOP:**
+```bash
+cd <project-path> && /d/prod/ec.sh -batch -config <project>.ecf -target <project>_tests -c_compile
+```
+
+The ECF already has `<concurrency support="scoop"/>`, so this verifies SCOOP compatibility.
+
+**If VUAR(2) errors occur:** The library's generic constraints need `separate` keyword. See simple_mml v1.0.1 for the pattern: `[G -> detachable separate ANY]`
+
 ### Step 7: Save Evidence
 
 Save to `<project-path>/.eiffel-workflow/evidence/phase1-compile.txt`:
@@ -259,3 +295,6 @@ The sub-agent searches, summarizes, and returns ONLY what you need. Your context
 - Contracts are written BEFORE implementation
 - Compilation gate ensures contracts are syntactically valid
 - Skeletal tests document what will be tested (can't claim "I forgot")
+- **MML is mandatory for collections** - decided in Phase 0, enforced here
+- **SCOOP consumer test catches integration issues early** - no "works for me" drift
+- **Skill Version Lock:** If you discover skill improvements during workflow, queue them in `<project-path>/.eiffel-workflow/skill-improvements.md` - do NOT modify skills mid-workflow

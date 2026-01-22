@@ -118,6 +118,60 @@ cd <project-path> && /d/prod/ec.sh -batch -config <project>.ecf -target <project
 
 **ALL TESTS MUST PASS.**
 
+### Step 4b: SCOOP Consumer Integration Gate (MANDATORY)
+
+**Why:** This catches integration issues that don't appear in standalone compilation. A library with `concurrency=scoop` may compile fine but cause VUAR(2) errors in consumer libraries.
+
+**Create mock consumer project** (temporary, can delete after test):
+
+```bash
+mkdir -p <project-path>/test_consumer
+```
+
+Create `<project-path>/test_consumer/consumer_test.ecf`:
+```xml
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<system name="consumer_test" uuid="[generate-new-uuid]">
+    <target name="consumer_test">
+        <root class="CONSUMER_TEST" feature="make"/>
+        <capability>
+            <concurrency support="scoop"/>
+            <void_safety support="all"/>
+        </capability>
+        <library name="base" location="$ISE_LIBRARY\library\base\base.ecf"/>
+        <library name="<project>" location="..\<project>.ecf"/>
+        <cluster name="src" location="."/>
+    </target>
+</system>
+```
+
+Create `<project-path>/test_consumer/consumer_test.e`:
+```eiffel
+class CONSUMER_TEST
+create make
+feature
+    make
+        local
+            l_obj: <MAIN_LIBRARY_CLASS>
+        do
+            create l_obj.make
+            -- Use library types in SCOOP context
+        end
+end
+```
+
+**Compile consumer:**
+```bash
+cd <project-path>/test_consumer && /d/prod/ec.sh -batch -config consumer_test.ecf -target consumer_test -c_compile
+```
+
+**If VUAR(2) errors:** Fix generic constraints in the library (add `separate` keyword).
+
+**Cleanup:**
+```bash
+rm -rf <project-path>/test_consumer
+```
+
 ### Step 5: Save Evidence
 
 Save to `<project-path>/.eiffel-workflow/evidence/phase6-tests.txt`:
@@ -130,6 +184,11 @@ Save to `<project-path>/.eiffel-workflow/evidence/phase6-tests.txt`:
 MML dependency added: [yes/no]
 Model queries added: [count]
 Frame conditions added: [count]
+
+## SCOOP Consumer Integration
+Consumer test created: [yes/no]
+Consumer compilation: [PASS/FAIL]
+VUAR(2) errors fixed: [count or N/A]
 
 ## Adversarial Testing
 Adversarial tests added: [count]

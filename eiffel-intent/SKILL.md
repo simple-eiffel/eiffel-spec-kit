@@ -73,6 +73,21 @@ Ask the user to describe what they want to build. Create `<project-path>/.eiffel
 
 ## Dependencies
 [Other simple_* libraries or systems required]
+
+## MML Decision (REQUIRED)
+
+**Does this library need MML model queries for precise postconditions?**
+
+| Answer | When to Choose |
+|--------|----------------|
+| **YES - Required** | Library has collections (HASH_TABLE, ARRAYED_LIST, etc.) that need frame conditions |
+| **YES - Optional** | Users may add MML postconditions to their extensions |
+| **NO** | Pure computation, no internal collections, simple value types |
+
+**If YES:** simple_mml will be added in Phase 1. Model queries will be mandatory for collections.
+
+**Decision:** [YES-Required / YES-Optional / NO]
+**Rationale:** [Brief explanation]
 ```
 
 ### Step 3: Generate AI Review Prompt File (MANUAL CYCLE)
@@ -222,3 +237,5 @@ The sub-agent searches, summarizes, and returns ONLY what you need. Your context
 - Prompt files are artifacts (can't claim review happened without them)
 - Human manually submits to AI (forced engagement)
 - Evidence file documents what AI was used
+- **MML decision is front-loaded** - no "we'll add it later" drift
+- **Skill Version Lock:** If you discover skill improvements during workflow, queue them in `<project-path>/.eiffel-workflow/skill-improvements.md` - do NOT modify skills mid-workflow
