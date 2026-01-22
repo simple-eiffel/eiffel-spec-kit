@@ -1,0 +1,6 @@
+# Keep only eiffel-* skills in this repo
+*
+!eiffel-*/
+!eiffel-*/SKILL.md
+!.gitignore
+!README.md
